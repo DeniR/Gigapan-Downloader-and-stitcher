@@ -13,7 +13,7 @@ Can resume download, downloaded tiles not reloaded.
 2. Install Imagemagick from http://www.imagemagick.org/script/binary-releases.php#windows (Windows). I recommend install ImageMagick-*-x64-static.exe x64 version, if you have x64 OS. For Linux use "yum install imagemagick" or simular command in Linux.  
 3. Change path to montage.exe in gigapanDownloader.py (Windows, default is "C:\\Program Files\\ImageMagick-6.8.5-Q16\\montage.exe") or change default /usr/local/bin/montage in Linux.  
 4. Select outputformat in gigapanDownloader.py - psb for large gigapans (default) or tif.  
-5. Run python gigapanDownloader.py <imageid> in cmd or console. All tiles will be downloaded to <imageid> directory, and stitched gigapan will be exported to <imageid>-giga.psb .
+5. Run **python gigapanDownloader.py \<imageid>** in cmd or console. All tiles will be downloaded to \<imageid> directory, and stitched gigapan will be exported to <imageid>-giga.psb .
 
 Example, http://www.gigapan.com/gigapans/130095  
 The <imageid> is 130095
