@@ -8,7 +8,6 @@ Work in Windows and in any Linux.
 Can resume download, downloaded tiles not reloaded.
 
 ###How to run?
-
 1. Install Pythin 2.X (3.X is not supported) from python.org (Windows) or "use "yum install python" or simular command in Linux.  
 2. Install Imagemagick from http://www.imagemagick.org/script/binary-releases.php#windows (Windows). I recommend install ImageMagick-*-x64-static.exe x64 version, if you have x64 OS. For Linux use "yum install imagemagick" or simular command in Linux.  
 3. Download this script from https://raw.github.com/DeniR/Gigapan-Downloader-and-stitcher/master/gigapanDownloader.py  
