@@ -1,5 +1,6 @@
 #usage: python downloadGigaPan.py <photoid>
 # http://gigapan.org/gigapans/<photoid>>
+# if level is 0, max resolution will be used, try with different levels to see the image resolution to download
 # change imagemagick or outputformat below
 # Project info https://github.com/DeniR/Gigapan-Downloader-and-stitcher
 
@@ -9,7 +10,7 @@ from urllib import *
 import sys,os,math,subprocess
 
 outputformat="psb" #psb or tif
-imagemagick="/usr/local/bin/montage" #Linux path to Imagemagick
+imagemagick="/usr/bin/montage" #Linux path to Imagemagick
 if os.name == "nt":
   imagemagick="C:\\Program Files\\ImageMagick-6.8.5-Q16\\montage.exe" #Windows path to Imagemagick
 
@@ -47,18 +48,38 @@ photo_kml=h.read()
 # find the width and height, level 
 dom = parseString(photo_kml)
 
-height=int(find_element_value(dom.documentElement, "maxHeight"))
-width=int(find_element_value(dom.documentElement, "maxWidth"))
+maxheight=int(find_element_value(dom.documentElement, "maxHeight"))
+maxwidth=int(find_element_value(dom.documentElement, "maxWidth"))
 tile_size=int(find_element_value(dom.documentElement, "tileSize"))
-
-print width,height,tile_size
-
-
-maxlevel = max(math.ceil(width/tile_size), math.ceil(height/tile_size))
+maxlevel = max(math.ceil(maxwidth/tile_size), math.ceil(maxheight/tile_size))
 maxlevel = int(math.ceil(math.log(maxlevel)/math.log(2.0)))
+maxwt = int(math.ceil(maxwidth/tile_size))+1
+maxht = int(math.ceil(maxheight/tile_size))+1
+
+# find the width, height, tile number and level to use
+level = int(sys.argv[2])
+if level == 0: 
+  level = maxlevel
+
+width = int(maxwidth / (2 ** (maxlevel-level)))+1
+height = int(maxheight / (2 ** (maxlevel-level)))+1
 wt = int(math.ceil(width/tile_size))+1
 ht = int(math.ceil(height/tile_size))+1
-print wt,ht,maxlevel
+
+# print the variables
+print '+----------------------------'
+print '| Max size: '+str(maxwidth)+'x'+str(maxheight)+'px'
+print '| Max number of tiles: '+str(maxwt)+'x'+str(maxht)+' tiles = '+str(wt*ht)+' tiles'
+print '| Max level: '+str(maxlevel)
+print '| Tile size: '+str(tile_size)
+print '+----------------------------'
+print '| Image to download:'
+print '| Size: '+str(width)+'x'+str(height)+'px'
+print '| Number of tiles: '+str(wt)+'x'+str(ht)+' tiles = '+str(wt*ht)+' tiles'
+print '| Level: '+str(level)
+print '+----------------------------'
+print
+print 'Starting download...'
 
 #loop around to get every tile
 for j in xrange(ht):
@@ -66,12 +87,13 @@ for j in xrange(ht):
         filename = "%04d-%04d.jpg"%(j,i)
 	pathfilename = str(photo_id)+"/"+filename
 	if not os.path.exists(pathfilename) :
-	        url = "%s/get_ge_tile/%d/%d/%d/%d"%(base,photo_id, maxlevel,j,i)
-	        print url, filename
+	        url = "%s/get_ge_tile/%d/%d/%d/%d"%(base,photo_id, level,j,i)
+	        progress = (j)*wt+i+1
+	        print '('+str(progress)+'/'+str(wt*ht)+') Downloading '+str(url)+' as '+str(filename)
 	        h = urlopen(url)
 	        fout = open(pathfilename,"wb")
 	        fout.write(h.read())
 	        fout.close()
 print "Stitching... "
-subprocess.call('"'+imagemagick+'" -depth 8 -geometry 256x256+0+0 -mode concatenate -tile '+str(wt)+'x '+str(photo_id)+'\*.jpg '+str(photo_id)+'-giga.'+outputformat, shell=True)
+subprocess.call('"'+imagemagick+'" -depth 8 -geometry 256x256+0+0 -mode concatenate -tile '+str(wt)+'x '+str(photo_id)+'/*.jpg '+str(photo_id)+'-giga.'+outputformat, shell=True)
 print "OK"
