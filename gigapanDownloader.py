@@ -95,5 +95,5 @@ for j in xrange(ht):
 	        fout.write(h.read())
 	        fout.close()
 print "Stitching... "
-subprocess.call('"'+imagemagick+'" -depth 8 -geometry 256x256+0+0 -mode concatenate -tile '+str(wt)+'x '+str(photo_id)+'\*.jpg '+str(photo_id)+'-giga.'+outputformat, shell=True)
+subprocess.call('"'+imagemagick+'" -depth 8 -geometry 256x256+0+0 -mode concatenate -tile '+str(wt)+'x '+str(photo_id)+'/*.jpg '+str(photo_id)+'-giga.'+outputformat, shell=True)
 print "OK"
