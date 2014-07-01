@@ -1,99 +1,112 @@
-#usage: python downloadGigaPan.py <photoid>
+#usage: python downloadGigaPan.py <photoid> <level>
 # http://gigapan.org/gigapans/<photoid>>
 # if level is 0, max resolution will be used, try with different levels to see the image resolution to download
 # change imagemagick or outputformat below
 # Project info https://github.com/DeniR/Gigapan-Downloader-and-stitcher
 
-from xml.dom.minidom import *
+import xml.etree.ElementTree as ET
 from urllib2 import *
 from urllib import *
 import sys,os,math,subprocess
 
-outputformat="psb" #psb or tif
-imagemagick="/usr/bin/montage" #Linux path to Imagemagick
+
+outputFormat="tif" #psb or tif
+imageMagick="/usr/bin/montage" #Linux path to Imagemagick
 if os.name == "nt":
-  imagemagick="C:\\Program Files\\ImageMagick-6.8.5-Q16\\montage.exe" #Windows path to Imagemagick
-
-def getText(nodelist):
-    rc = ""
-    for node in nodelist:
-        if node.nodeType == node.TEXT_NODE:
-            rc = rc + node.data
-    return rc
-
-def find_element_value(e,name):
-    nodelist = [e]
-    while len(nodelist) > 0 :
-        node = nodelist.pop()
-        if node.nodeType == node.ELEMENT_NODE and node.localName == name:
-            return getText(node.childNodes)
-        else:
-            nodelist += node.childNodes
-
-    return None
+	imageMagick="C:\\Program Files\\ImageMagick-6.8.5-Q16\\montage.exe" #Windows path to Imagemagick
 
 
-#main
+# -------------------------------------------------- Get Arguments --------------------------------------------------
 
-photo_id = int(sys.argv[1])
-if not os.path.exists(str(photo_id)):
-    os.makedirs(str(photo_id))
+givenID = str(sys.argv[1]) # Can be an hex ID
+givenLevel = int(sys.argv[2])
 
-base = "http://www.gigapan.org"
 
-# read the kml file
-h = urlopen(base+"/gigapans/%d.kml"%(photo_id))
-photo_kml=h.read()
+# -------------------------------------------------- Get KML with information --------------------------------------------------
 
-# find the width and height, level 
-dom = parseString(photo_kml)
+KML = urlopen("http://www.gigapan.org/gigapans/%s.kml"%(givenID))
+KMLString = KML.read()
+KMLElementRoot = ET.fromstring(KMLString)
+#tree = ET.parse('ejemplo.kml')
+#KMLElementRoot = tree.getroot()
+KMLNamespace = KMLElementRoot.tag.strip("}kml").strip("{") # Get namespace by removing tag and brackets, namespace is used as a prefix in tags
 
-maxheight=int(find_element_value(dom.documentElement, "maxHeight"))
-maxwidth=int(find_element_value(dom.documentElement, "maxWidth"))
-tile_size=int(find_element_value(dom.documentElement, "tileSize"))
-maxlevel = max(math.ceil(maxwidth/tile_size), math.ceil(maxheight/tile_size))
-maxlevel = int(math.ceil(math.log(maxlevel)/math.log(2.0)))
-maxwt = int(math.ceil(maxwidth/tile_size))+1
-maxht = int(math.ceil(maxheight/tile_size))+1
 
-# find the width, height, tile number and level to use
-level = int(sys.argv[2])
-if level == 0: 
-  level = maxlevel
+# -------------------------------------------------- Navigation through KML to get information --------------------------------------------------
 
-width = int(maxwidth / (2 ** (maxlevel-level)))+1
-height = int(maxheight / (2 ** (maxlevel-level)))+1
-wt = int(math.ceil(width/tile_size))+1
-ht = int(math.ceil(height/tile_size))+1
+KMLElementPhotoOverlay = KMLElementRoot[0].find("{"+KMLNamespace+"}PhotoOverlay") # Locating PhotoOverlay tag, which contains all the information useful to us
+KMLElementImagePyramid = KMLElementPhotoOverlay.find("{"+KMLNamespace+"}ImagePyramid") # Locating ImagePyramid tag
+KMLElementIcon = KMLElementPhotoOverlay.find("{"+KMLNamespace+"}Icon") # Locating Icon tag
 
-# print the variables
-print '+----------------------------'
-print '| Max size: '+str(maxwidth)+'x'+str(maxheight)+'px'
-print '| Max number of tiles: '+str(maxwt)+'x'+str(maxht)+' tiles = '+str(wt*ht)+' tiles'
-print '| Max level: '+str(maxlevel)
-print '| Tile size: '+str(tile_size)
-print '+----------------------------'
-print '| Image to download:'
-print '| Size: '+str(width)+'x'+str(height)+'px'
-print '| Number of tiles: '+str(wt)+'x'+str(ht)+' tiles = '+str(wt*ht)+' tiles'
-print '| Level: '+str(level)
-print '+----------------------------'
-print
-print 'Starting download...'
+IDString = KMLElementPhotoOverlay.attrib["id"] # Image ID can be found as an attribute of PhotoOverlay
+ID = int(IDString.strip("gigapan_")) # Remove "gigapan_" prefix and convert to int
+maxWidth = int(KMLElementImagePyramid.find("{"+KMLNamespace+"}maxWidth").text) # Image width in pixels for higher level
+maxHeight = int(KMLElementImagePyramid.find("{"+KMLNamespace+"}maxHeight").text) # Image height in pixels for higher level
+tileSize = int(KMLElementImagePyramid.find("{"+KMLNamespace+"}tileSize").text) # Size of tiles in pixels
+tilesURL = KMLElementIcon.find("{"+KMLNamespace+"}href").text
 
-#loop around to get every tile
-for j in xrange(ht):
-    for i in xrange(wt):
-        filename = "%04d-%04d.jpg"%(j,i)
-	pathfilename = str(photo_id)+"/"+filename
-	if not os.path.exists(pathfilename) :
-	        url = "%s/get_ge_tile/%d/%d/%d/%d"%(base,photo_id, level,j,i)
-	        progress = (j)*wt+i+1
-	        print '('+str(progress)+'/'+str(wt*ht)+') Downloading '+str(url)+' as '+str(filename)
-	        h = urlopen(url)
-	        fout = open(pathfilename,"wb")
-	        fout.write(h.read())
-	        fout.close()
+
+# -------------------------------------------------- Calculation of image properties --------------------------------------------------
+
+maxWidthTiles = int(math.ceil(maxWidth/tileSize)) + 1 # Image width in tiles for higher level
+maxHeightTiles = int(math.ceil(maxHeight/tileSize)) + 1 # Image height in tiles for higher level
+
+maxLevel = max(math.ceil(maxWidth/tileSize), math.ceil(maxHeight/tileSize))
+maxLevel = int(math.ceil(math.log(maxLevel)/math.log(2.0)))
+
+if givenLevel == 0: 
+	level = maxLevel
+else:
+	level = givenLevel
+
+width = int(maxWidth / (2 ** (maxLevel-level)))+1 # Image width in pixels
+height = int(maxHeight / (2 ** (maxLevel-level)))+1 # Image height in pixels
+widthTiles = int(math.ceil(width/tileSize))+1 # Image width in tiles
+heightTiles = int(math.ceil(height/tileSize))+1 # Image height in tiles
+
+tilesURL = tilesURL.replace("$[level]", str(level)) # Placing ID in tiles URL
+
+
+# -------------------------------------------------- Create tiles folder if necessary --------------------------------------------------
+
+if not os.path.exists(str(ID)):
+	os.makedirs(str(ID))
+
+
+# -------------------------------------------------- Print the variables --------------------------------------------------
+print "Gigapan image properties:"
+print "   Max size: %dx%dpx"%(maxWidth, maxHeight)
+print "   Max number of tiles: %dx%d tiles = %d tiles"%(maxWidthTiles, maxHeightTiles, maxWidthTiles*maxHeightTiles)
+print "   Max resolution level: %d"%(maxLevel)
+print ""
+print "Arguments given:"
+print "   ID: %s"%(givenID)
+print "   Resolution level: %d"%(givenLevel)
+print ""
+print "Image to download:"
+print "   ID: %s"%(ID)
+print "   Size: %dx%dpx"%(width, height)
+print "   Number of tiles: %dx%d tiles = %d tiles"%(widthTiles, heightTiles, widthTiles*heightTiles)
+print "   Resolution level: %d"%(level)
+print ""
+print "Starting Download..."
+print ""
+
+
+# -------------------------------------------------- Loop around to get every tile --------------------------------------------------
+for j in xrange(heightTiles):
+	for i in xrange(widthTiles):
+		filename = "%04d-%04d.jpg"%(j,i)
+		pathFilename = str(ID)+"/"+filename
+		if not os.path.exists(pathFilename) :
+			URL = tilesURL.replace("$[y]", str(j)) # Place j in URL
+			URL = URL.replace("$[x]", str(i)) # Place i in URL
+			progress = j*widthTiles+i+1 # Calculate tiles downloaded
+			print '('+str(progress)+'/'+str(widthTiles*heightTiles)+') Downloading '+str(URL)+' as '+str(filename) 
+			h = urlopen(URL)
+			fout = open(pathFilename,"wb")
+			fout.write(h.read())
+			fout.close()
 print "Stitching... "
-subprocess.call('"'+imagemagick+'" -depth 8 -geometry 256x256+0+0 -mode concatenate -tile '+str(wt)+'x '+str(photo_id)+'/*.jpg '+str(photo_id)+'-giga.'+outputformat, shell=True)
-print "OK"
+subprocess.call('"'+imageMagick+'" -depth 8 -geometry 256x256+0+0 -mode concatenate -tile '+str(widthTiles)+'x '+str(ID)+'/*.jpg '+str(ID)+'-giga.'+outputFormat, shell=True)
+print "Finished!"
