@@ -102,7 +102,25 @@ for j in xrange(ht):
                 ++errors
 if errors == 0:
     print "Stitching... "
-    subprocess.call('"'+imagemagick+'" -depth 8 -geometry 256x256+0+0 -mode concatenate -tile '+str(wt)+'x '+str(photo_id)+'/*.jpg '+str(photo_id)+'-giga.'+outputformat, shell=True)
+    for j in xrange(ht):
+        lineNo = "%04d"%(j)
+        print 'creating line '+ str(lineNo)
+        subprocess.call('"'+imagemagick+'" -depth 8 '+
+                                        '-geometry 256x256+0+0 ' +
+                                        '-mode concatenate ' +
+                                        '-tile '+ str(wt)+'x ' +
+                                        str(photo_id)+'/'+str(lineNo)+'-*.jpg ' +
+                                        str(photo_id)+'/line-'+ str(lineNo) +'.jpg',
+                        shell=True)
+    wline = wt * 256
+    print 'creating output file '
+    subprocess.call('"'+imagemagick+'" -depth 8 '+
+                    '-geometry '+str(wline)+'x256+0+0 ' +
+                    '-mode concatenate ' +
+                    '-tile x'+ str(ht)+' ' +
+                    str(photo_id)+'/line-*.jpg ' +
+                    str(photo_id)+'.'+outputformat,
+                    shell=True)
     print "OK"
 else:
     print "Downloading error try running command again"
