@@ -81,19 +81,46 @@ print '+----------------------------'
 print
 print 'Starting download...'
 
+errors = 0
+
 #loop around to get every tile
 for j in xrange(ht):
     for i in xrange(wt):
         filename = "%04d-%04d.jpg"%(j,i)
-	pathfilename = str(photo_id)+"/"+filename
-	if not os.path.exists(pathfilename) :
-	        url = "%s/get_ge_tile/%d/%d/%d/%d"%(base,photo_id, level,j,i)
-	        progress = (j)*wt+i+1
-	        print '('+str(progress)+'/'+str(wt*ht)+') Downloading '+str(url)+' as '+str(filename)
-	        h = urlopen(url)
-	        fout = open(pathfilename,"wb")
-	        fout.write(h.read())
-	        fout.close()
-print "Stitching... "
-subprocess.call('"'+imagemagick+'" -depth 8 -geometry 256x256+0+0 -mode concatenate -tile '+str(wt)+'x '+str(photo_id)+'/*.jpg '+str(photo_id)+'-giga.'+outputformat, shell=True)
-print "OK"
+        pathfilename = str(photo_id)+"/"+filename
+        if not os.path.exists(pathfilename) :
+            url = "%s/get_ge_tile/%d/%d/%d/%d"%(base,photo_id, level,j,i)
+            progress = (j)*wt+i+1
+            print '('+str(progress)+'/'+str(wt*ht)+') Downloading '+str(url)+' as '+str(filename)
+            h = urlopen(url)
+            if 200 == h.code :
+                fout = open(pathfilename,"wb")
+                fout.write(h.read())
+                fout.close()
+            else:
+                print '('+str(progress)+'/'+str(wt*ht)+') Downloading error '+str(url)+' http code '+str(h.code)
+                ++errors
+if errors == 0:
+    print "Stitching... "
+    for j in xrange(ht):
+        lineNo = "%04d"%(j)
+        print 'creating line '+ str(lineNo)
+        subprocess.call('"'+imagemagick+'" -depth 8 '+
+                                        '-geometry 256x256+0+0 ' +
+                                        '-mode concatenate ' +
+                                        '-tile '+ str(wt)+'x ' +
+                                        str(photo_id)+'/'+str(lineNo)+'-*.jpg ' +
+                                        str(photo_id)+'/line-'+ str(lineNo) +'.jpg',
+                        shell=True)
+    wline = wt * 256
+    print 'creating output file '
+    subprocess.call('"'+imagemagick+'" -depth 8 '+
+                    '-geometry '+str(wline)+'x256+0+0 ' +
+                    '-mode concatenate ' +
+                    '-tile x'+ str(ht)+' ' +
+                    str(photo_id)+'/line-*.jpg ' +
+                    str(photo_id)+'.'+outputformat,
+                    shell=True)
+    print "OK"
+else:
+    print "Downloading error try running command again"
