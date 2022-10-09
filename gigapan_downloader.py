@@ -73,7 +73,7 @@ def calculate_size(max_width_px, max_height_px, tile_size_px, max_level, level):
 
     return (width_px, height_px), (width_tiles, height_tiles)
 
-def download_tiles(out_folder, img_id, tiles_url, height_tiles, width_tiles):
+def download_tiles(out_folder, img_id, tiles_url, height_tiles, width_tiles, tile_size_px):
 
     folder = Path(out_folder) / str(img_id)
     try:
@@ -98,10 +98,21 @@ def download_tiles(out_folder, img_id, tiles_url, height_tiles, width_tiles):
                 fout.close()
 
     print("Stitching... ")
+    for line in range(height_tiles):
+        subprocess.run([
+                f"{montage_command} -depth 8 -geometry {tile_size_px}x{tile_size_px}+0+0 \
+                -mode concatenate -tile {width_tiles}x \
+                {out_folder}/{img_id}/{line:04}-*.jpg \
+                {out_folder}/{img_id}/line-{line:04}.{output_format}"
+            ], shell=True, check=True,
+        )
+
+    final_width_px = width_tiles * tile_size_px
     subprocess.run([
-            f"{montage_command} -depth 8 -geometry 256x256+0+0 \
-            -mode concatenate -tile {width_tiles}x \
-            {out_folder}/{img_id}/*.jpg {out_folder}/{img_id}-giga.{output_format}"
+            f"{montage_command} -depth 8 -geometry {final_width_px}x{tile_size_px}+0+0 \
+            -mode concatenate -tile x{height_tiles} \
+            {out_folder}/{img_id}/line-*.{output_format} \
+            {out_folder}/{img_id}-giga.{output_format}"
         ], shell=True, check=True,
     )
     print("Finished!")
@@ -140,7 +151,7 @@ Image to download:
     """)
 
     if not dry_run:
-        download_tiles(out_folder, img_id, tiles_url, height_tiles, width_tiles)
+        download_tiles(out_folder, img_id, tiles_url, height_tiles, width_tiles, tile_size_px)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
