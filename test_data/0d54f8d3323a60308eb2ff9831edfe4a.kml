@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2" xmlns:gx="http://www.google.com/kml/ext/2.2" xmlns:kml="http://www.opengis.net/kml/2.2" xmlns:atom="http://www.w3.org/2005/Atom">
+  
+    <Document>
+
+      <name>Panoramas</name>
+      <open>1</open>
+
+      <Style id="panoramaStyle">
+        <IconStyle>
+          <Icon><href>http://gigapan.com/images/ge_icon.png</href></Icon>
+        </IconStyle>
+        <BalloonStyle>
+          <text>$[description]</text>
+        </BalloonStyle>
+      </Style>
+
+      
+  <PhotoOverlay id="gigapan_148577">
+  <name>North pole of the Moon - No annotations</name>
+  <Snippet maxLines="1">
+    <![CDATA[<a href="#gigapan_148577">Enter panorama</a>]]>
+  </Snippet>
+
+  
+    <description>
+      <![CDATA[
+
+        <div align="center">
+
+          <table width="500">
+            <tr>
+              <td>
+                <a href="http://gigapan.com">
+                  <img alt="Logo" src='http://gigapan.com/images/logo.png?1380820263/' />
+                </a>
+              </td>
+              <td>
+                <font size="10">$[name]</font>
+                <hr>
+                <a href="#gigapan_148577;flyto">Enter Panorama</a> |
+                <a href="http://gigapan.com/gigapans/0d54f8d3323a60308eb2ff9831edfe4a">
+                  "Panorama at GigaPan.com"</a>
+              </td>
+            </tr>
+            <tr>
+              <td colspan="2" align="center">
+                <a href="#gigapan_148577"><img alt="North pole of the Moon - No annotations" class="thumbnail" src="//static.gigapan.com/gigapans0/148577/images.0d54f8d3323a60308eb2ff9831edfe4a/148577-500x500.jpg" title="North pole of the Moon - No annotations" /></a>
+              </td>
+            </tr>
+            <tr>
+              <td colspan="2">
+                <p>This image is a mosaic of 10581 images taken by the Narrow Angle Camera (NAC) on the Lunar Reconnaissance Orbiter (lroc.sese.asu.edu).  The mosaic covers the north pole region of the Moon, from 60° north to the pole, and has a resolution of 2 meters per pixel.  The portion of the mosaic that contains valid image data is 680.8 gigapixel, and covers an area of 2.54 million square kilometers.
+ 
+The individual images were acquired over a span of four years (2009-2014).  The majority were taken as part of "collar" mosaics acquired in 2012 and 2013.  Each collar mosaic was acquired by imaging the same latitude once every two-hour orbit for a month during which time the rotation of the Moon steadily brought every longitude into view.  Each collar mosaic has very similar lighting from start to end and covers 1° to 3° of latitude. In places where there are gaps in the collars (due to spacecraft anomalies and special slewed observations that point the cameras off into space), we filled the gap with images from other times in the mission, selected to match the lighting as closely as possible.  There may be significant lighting differences (sometimes including reversed Sun direction) between individual collars, and between collars and gap-filling images.
+ 
+Assembling this mosaic posed significant logistical challenges.  We process NAC images using 32-bit floating-point values to preserve subtle shading gradations during the calibration process.  If we had processed the mosaic as a single file, it would have been approximately 3.3 terabytes, so we instead processed it as 841 4-gigabyte tiles.  Due to this tiling scheme, we needed to use a custom script to upload to Gigapan.com.</p>
+                <p>Explore Score: $[score]</p>
+                <p align="right">
+                  <b>Author</b>:
+                  <a href="http://gigapan.com/profiles/LROC">
+                    Lunar Reconnaissance Orbiter Camera
+                  </a>
+                </p>
+              </td>
+            </tr>
+          </table>
+        </div>
+      ]]>
+    </description>
+  
+
+  <Camera id="gigapan_148577_camera">
+    <longitude>-122.1419</longitude>
+    <latitude>37.4413</latitude>
+    <altitude>6</altitude>
+    <heading>0</heading>
+    <tilt>90</tilt>
+    <roll>0.0</roll>
+  </Camera>
+
+  <styleUrl>#panoramaStyle</styleUrl>
+
+  <ExtendedData>
+    <Data name="score">
+      <value>1.0</value>
+    </Data>
+  </ExtendedData>
+
+  <color>feffffff</color>
+
+  <Icon>
+    <href>http://gigapan.com/get_ge_tile/148577/$[level]/$[y]/$[x]?auth_key=0d54f8d3323a60308eb2ff9831edfe4a</href>
+  </Icon>
+
+  <rotation>0.0</rotation>
+
+  <ViewVolume id="gigapan_148577_viewvolume">
+    <leftFov>-1454.796875</leftFov>
+    <rightFov>1454.796875</rightFov>
+    <bottomFov>-2819.59375</bottomFov>
+    <topFov>90.0</topFov>
+    <near>15</near>
+  </ViewVolume>
+
+  <ImagePyramid>
+    <tileSize>256</tileSize>
+    <maxWidth>931070</maxWidth>
+    <maxHeight>931070</maxHeight>
+    <gridOrigin>upperLeft</gridOrigin>
+  </ImagePyramid>
+
+  <Point id="gigapan_148577_point">
+    <coordinates>-122.1419,37.4413</coordinates>
+  </Point>
+
+  <shape>sphere</shape>
+
+</PhotoOverlay>
+
+
+
+
+    </Document>
+  
+</kml>

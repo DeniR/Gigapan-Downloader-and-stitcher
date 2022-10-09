@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2" xmlns:gx="http://www.google.com/kml/ext/2.2" xmlns:kml="http://www.opengis.net/kml/2.2" xmlns:atom="http://www.w3.org/2005/Atom">
+  
+    <Document>
+
+      <name>Panoramas</name>
+      <open>1</open>
+
+      <Style id="panoramaStyle">
+        <IconStyle>
+          <Icon><href>http://gigapan.com/images/ge_icon.png</href></Icon>
+        </IconStyle>
+        <BalloonStyle>
+          <text>$[description]</text>
+        </BalloonStyle>
+      </Style>
+
+      
+  <PhotoOverlay id="gigapan_130095">
+  <name>Luxembourg, Balcony of Europe, view to Grund City | Люксембург, Балкон Европы, вид на старый город</name>
+  <Snippet maxLines="1">
+    <![CDATA[<a href="#gigapan_130095">Enter panorama</a>]]>
+  </Snippet>
+
+  
+    <description>
+      <![CDATA[
+
+        <div align="center">
+
+          <table width="500">
+            <tr>
+              <td>
+                <a href="http://gigapan.com">
+                  <img alt="Logo" src='http://gigapan.com/images/logo.png?1380820263/' />
+                </a>
+              </td>
+              <td>
+                <font size="10">$[name]</font>
+                <hr>
+                <a href="#gigapan_130095;flyto">Enter Panorama</a> |
+                <a href="http://gigapan.com/gigapans/130095">
+                  "Panorama at GigaPan.com"</a>
+              </td>
+            </tr>
+            <tr>
+              <td colspan="2" align="center">
+                <a href="#gigapan_130095"><img alt="Luxembourg, Balcony of Europe, view to Grund City | Люксембург, Балкон Европы, вид на старый город" class="thumbnail" src="//static.gigapan.com/gigapans0/130095/images/130095-500x166.jpg" title="Luxembourg, Balcony of Europe, view to Grund City | Люксембург, Балкон Европы, вид на старый город" /></a>
+              </td>
+            </tr>
+            <tr>
+              <td colspan="2">
+                <p>Luxembourg, Balcony of Europe, view to Old City (Grund)
+Люксембург, красивейший вид под названием Балкон Европы на старый город и крепость.</p>
+                <p>Explore Score: $[score]</p>
+                <p align="right">
+                  <b>Author</b>:
+                  <a href="http://gigapan.com/profiles/djonline">
+                    djonline
+                  </a>
+                </p>
+              </td>
+            </tr>
+          </table>
+        </div>
+      ]]>
+    </description>
+  
+
+  <Camera id="gigapan_130095_camera">
+    <longitude>6.13531</longitude>
+    <latitude>49.610955</latitude>
+    <altitude>40.0</altitude>
+    <heading>100.0</heading>
+    <tilt>90.0</tilt>
+    <roll>0.0</roll>
+  </Camera>
+
+  <styleUrl>#panoramaStyle</styleUrl>
+
+  <ExtendedData>
+    <Data name="score">
+      <value>1.0</value>
+    </Data>
+  </ExtendedData>
+
+  <color>feffffff</color>
+
+  <Icon>
+    <href>http://gigapan.com/get_ge_tile/130095/$[level]/$[y]/$[x]</href>
+  </Icon>
+
+  <rotation>0.0</rotation>
+
+  <ViewVolume id="gigapan_130095_viewvolume">
+    <leftFov>-109.0</leftFov>
+    <rightFov>109.0</rightFov>
+    <bottomFov>-57.0</bottomFov>
+    <topFov>15.4208746073931</topFov>
+    <near>15.0</near>
+  </ViewVolume>
+
+  <ImagePyramid>
+    <tileSize>256</tileSize>
+    <maxWidth>12417</maxWidth>
+    <maxHeight>4125</maxHeight>
+    <gridOrigin>upperLeft</gridOrigin>
+  </ImagePyramid>
+
+  <Point id="gigapan_130095_point">
+    <coordinates>6.13531,49.610955</coordinates>
+  </Point>
+
+  <shape>sphere</shape>
+
+</PhotoOverlay>
+
+
+
+
+    </Document>
+  
+</kml>

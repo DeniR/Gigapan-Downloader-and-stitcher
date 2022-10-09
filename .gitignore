@@ -1,3 +1,5 @@
+test_results/
+
 *.py[cod]
 
 # C extensions
