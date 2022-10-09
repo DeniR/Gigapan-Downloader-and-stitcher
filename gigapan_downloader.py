@@ -20,7 +20,6 @@ from pathlib import Path
 import math
 import subprocess
 
-output_format = "tif" # psb or tif
 montage_command = "/usr/bin/montage" # Linux path to Imagemagick
 if os.name == "nt":
     montage_command = "C:\\Program Files\\ImageMagick-6.8.5-Q16\\montage.exe" # Windows path to Imagemagick
@@ -68,14 +67,14 @@ def calculate_size(max_width_px, max_height_px, tile_size_px, max_level, level):
 
     width_px = int(max_width_px / (2 ** (max_level-level))) + 1 # Image width in pixels
     height_px = int(max_height_px / (2 ** (max_level-level))) + 1 # Image height in pixels
-    width_tiles = int(math.ceil(width_px/tile_size_px)) + 1 # Image width in tiles
-    height_tiles = int(math.ceil(height_px/tile_size_px)) + 1 # Image height in tiles
+    width_tiles = int(math.ceil(width_px/tile_size_px)) # Image width in tiles
+    height_tiles = int(math.ceil(height_px/tile_size_px)) # Image height in tiles
 
     return (width_px, height_px), (width_tiles, height_tiles)
 
-def download_tiles(out_folder, img_id, tiles_url, height_tiles, width_tiles, tile_size_px):
+def download_tiles(out_folder, output_format, img_id, tiles_url, height_tiles, width_tiles, tile_size_px, retries):
 
-    folder = Path(out_folder) / str(img_id)
+    folder = out_folder / str(img_id)
     try:
         folder.mkdir(parents=True)
     except FileExistsError:
@@ -84,18 +83,44 @@ def download_tiles(out_folder, img_id, tiles_url, height_tiles, width_tiles, til
     print("Starting download... ")
     for j in range(height_tiles):
         for i in range(width_tiles):
-            filename = folder / f"{j:04}-{i:04}.jpg"
-            if not os.path.exists(filename) :
-                url = tiles_url.replace("$[y]", str(j)) # Place j in URL
-                url = url.replace("$[x]", str(i)) # Place i in URL
-                response = urllib.request.urlopen(url)
 
-                progress = j*width_tiles + i + 1
-                print(f"[{progress/width_tiles*height_tiles}] Downloading {url} as {filename} ")
+            filename = folder / f"{j:04}-{i:04}.jpg"
+
+            url = tiles_url.replace("$[y]", str(j)) # Place j in URL
+            url = url.replace("$[x]", str(i)) # Place i in URL
+
+            progress = round((j*width_tiles + i + 1) / (width_tiles*height_tiles) * 100)
+            print(f"[{progress:3}%] Downloading {url} as {filename} ")
+
+            if not os.path.exists(filename):
+
+                success = False
+                for _ in range(retries):
+                    try:
+                        response = urllib.request.urlopen(url)
+                    except urllib.error.URLError as e:
+                        print(f"Error downloading image {url}: {e.reason}")
+                        print("Retrying...")
+                        continue
+
+                    if response.status == 200:
+                        success = True
+                        break
+                    else:
+                        print(f"Error downloading image {url}: Response {response.status}")
+                        print("Retrying...")
+                        continue
+
+                if success == False:
+                    print("Max retries reached, aborting download. You can run the program again \
+                                  to continue from here")
+                    return
 
                 fout = open(filename, "wb")
                 fout.write(response.read())
                 fout.close()
+            else:
+                print("File was already downloaded, continuing...")
 
     print("Stitching... ")
     for line in range(height_tiles):
@@ -117,7 +142,7 @@ def download_tiles(out_folder, img_id, tiles_url, height_tiles, width_tiles, til
     )
     print("Finished!")
 
-def main(img_name, req_level=None, out_folder=".", dry_run=False):
+def main(img_name, req_level, out_folder, output_format, dry_run, retries):
     """If req_level is None, the maximum resolution will be used"""
 
     response = urllib.request.urlopen(f"http://www.gigapan.org/gigapans/{img_name}.kml")
@@ -151,11 +176,11 @@ Image to download:
     """)
 
     if not dry_run:
-        download_tiles(out_folder, img_id, tiles_url, height_tiles, width_tiles, tile_size_px)
+        download_tiles(out_folder, output_format, img_id, tiles_url, height_tiles, width_tiles, tile_size_px, retries)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-            description='Imprimir tablas de SQLite para DSO Guide')
+            description='Gigapan image downloader')
 
     parser.add_argument('img_name', type=str,
             help='Name of image, should be obtained from the link: \
@@ -163,15 +188,21 @@ if __name__ == "__main__":
 
     parser.add_argument('-l', '--req-level', type=int,
             help='Requested resolution level. If unset, it will download at max resolution. Try \
-                    different levels with --dry-run to observe the image size')
+                    different levels with --dry-run to observe the image size.')
 
     parser.add_argument('--dry-run', action="store_true",
             help='Fetch image metadata without downloading images. Can be used \
                         to observe the expected image size among other things.')
 
-    parser.add_argument('-o', '--out-folder', type=str,
-            help='Output folder. It will be created if it does not exist')
+    parser.add_argument('--retries', type=int, default=5,
+            help='Maximum amount of retries per image.')
+
+    parser.add_argument('--out_format', type=str, default="tif",
+            help='Output format. Use "tif" or "psb".')
+
+    parser.add_argument('-o', '--out-folder', type=Path, default=Path("./downloaded/"),
+            help='Output folder. It will be created if it does not exist.')
 
     args = parser.parse_args()
 
-    main(args.img_name, args.req_level, args.out_folder, args.dry_run)
+    main(args.img_name, args.req_level, args.out_folder, args.out_format, args.dry_run, args.retries)

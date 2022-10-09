@@ -1,4 +1,5 @@
 test_results/
+downloaded/
 
 *.py[cod]
 
