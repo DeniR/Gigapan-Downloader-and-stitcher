@@ -12,7 +12,7 @@ def test_integration(mocker, img_name):
 
     def urllopen(url):
         response = mocker.Mock()
-        if url == f"http://www.gigapan.org/gigapans/{img_name}.kml":
+        if url == f"http://www.gigapan.com/gigapans/{img_name}.kml":
             response.read.return_value = Path(".", "test_data", f"{img_name}.kml").read_text()
 
         else:

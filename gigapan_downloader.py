@@ -4,7 +4,7 @@
 #     gigapan_downloader.py -h
 #
 # Normally links are:
-#     http://gigapan.org/gigapans/<img_name>>
+#     http://gigapan.com/gigapans/<img_name>>
 #
 # if level is 0, max resolution will be used, try with different levels to see
 # the image resolution to download
@@ -145,7 +145,7 @@ def download_tiles(out_folder, output_format, img_id, tiles_url, height_tiles, w
 def main(img_name, req_level, out_folder, output_format, dry_run, retries):
     """If req_level is None, the maximum resolution will be used"""
 
-    response = urllib.request.urlopen(f"http://www.gigapan.org/gigapans/{img_name}.kml")
+    response = urllib.request.urlopen(f"http://www.gigapan.com/gigapans/{img_name}.kml")
     img_id, tiles_url, (max_width_px, max_height_px), tile_size_px = parse_kml(response.read())
 
     (max_width_tiles, max_height_tiles), max_level = calculate_max_size(
@@ -184,7 +184,7 @@ if __name__ == "__main__":
 
     parser.add_argument('img_name', type=str,
             help='Name of image, should be obtained from the link: \
-                    http://gigapan.org/gigapans/[img_name]')
+                    http://gigapan.com/gigapans/[img_name]')
 
     parser.add_argument('-l', '--req-level', type=int,
             help='Requested resolution level. If unset, it will download at max resolution. Try \
