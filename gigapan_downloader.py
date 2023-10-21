@@ -200,7 +200,7 @@ if __name__ == "__main__":
     parser.add_argument('--out_format', type=str, default="tif",
             help='Output format. Use "tif" or "psb".')
 
-    parser.add_argument('-o', '--out-folder', type=Path, default=Path("./downloaded/"),
+    parser.add_argument('-o', '--out-folder', type=Path, default=Path("downloaded/"),
             help='Output folder. It will be created if it does not exist.')
 
     args = parser.parse_args()

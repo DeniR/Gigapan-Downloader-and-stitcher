@@ -24,9 +24,10 @@ def test_integration(mocker, img_name):
 
         return response
 
-    out_folder = "./test_results/"
+    out_folder = "test_results/"
 
     urllopen_mock = mocker.patch("urllib.request.urlopen", side_effect=urllopen)
-    gigapan_downloader.main(img_name, req_level=2, out_folder=out_folder)
+    gigapan_downloader.main(img_name, req_level=2, out_folder=Path(out_folder), output_format="tif",
+                            dry_run=False, retries=5)
 
     # assert Path(".", "downloads", );
