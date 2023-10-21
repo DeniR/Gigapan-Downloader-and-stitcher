@@ -112,8 +112,8 @@ def download_tiles(out_folder, output_format, img_id, tiles_url, height_tiles, w
                         continue
 
                 if success == False:
-                    print("Max retries reached, aborting download. You can run the program again \
-                                  to continue from here")
+                    print("Max retries reached, aborting download. You can run the program again "
+                             "to continue from here")
                     return
 
                 fout = open(filename, "wb")
@@ -183,16 +183,16 @@ if __name__ == "__main__":
             description='Gigapan image downloader')
 
     parser.add_argument('img_name', type=str,
-            help='Name of image, should be obtained from the link: \
-                    http://gigapan.com/gigapans/[img_name]')
+            help='Name of image, should be obtained from the link: '
+                    'http://gigapan.com/gigapans/[img_name]')
 
     parser.add_argument('-l', '--req-level', type=int,
-            help='Requested resolution level. If unset, it will download at max resolution. Try \
-                    different levels with --dry-run to observe the image size.')
+            help='Requested resolution level. If unset, it will download at max resolution. Try '
+                    'different levels with --dry-run to observe the image size.')
 
     parser.add_argument('--dry-run', action="store_true",
-            help='Fetch image metadata without downloading images. Can be used \
-                        to observe the expected image size among other things.')
+            help='Fetch image metadata without downloading images. Can be used '
+                    'to observe the expected image size among other things.')
 
     parser.add_argument('--retries', type=int, default=5,
             help='Maximum amount of retries per image.')
