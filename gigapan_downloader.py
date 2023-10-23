@@ -4,7 +4,7 @@
 #     gigapan_downloader.py -h
 #
 # Normally links are:
-#     http://gigapan.org/gigapans/<img_name>>
+#     http://gigapan.com/gigapans/<img_name>>
 #
 # if level is 0, max resolution will be used, try with different levels to see
 # the image resolution to download
@@ -13,7 +13,7 @@
 # Project info: https://github.com/DeniR/Gigapan-Downloader-and-stitcher
 
 import xml.etree.ElementTree as ElementTree
-import urllib.request
+import requests
 import argparse
 import os
 from pathlib import Path
@@ -72,7 +72,7 @@ def calculate_size(max_width_px, max_height_px, tile_size_px, max_level, level):
 
     return (width_px, height_px), (width_tiles, height_tiles)
 
-def download_tiles(out_folder, output_format, img_id, tiles_url, height_tiles, width_tiles, tile_size_px, retries):
+def download_tiles(out_folder, output_format, img_id, session, tiles_url, height_tiles, width_tiles, tile_size_px, retries):
 
     folder = out_folder / str(img_id)
     try:
@@ -97,27 +97,27 @@ def download_tiles(out_folder, output_format, img_id, tiles_url, height_tiles, w
                 success = False
                 for _ in range(retries):
                     try:
-                        response = urllib.request.urlopen(url)
-                    except urllib.error.URLError as e:
+                        response = session.get(url, timeout=30)
+                    except requests.RequestException as e:
                         print(f"Error downloading image {url}: {e.reason}")
                         print("Retrying...")
                         continue
 
-                    if response.status == 200:
+                    if response.status_code == 200:
                         success = True
                         break
                     else:
-                        print(f"Error downloading image {url}: Response {response.status}")
+                        print(f"Error downloading image {url}: Response {response.status_code}")
                         print("Retrying...")
                         continue
 
                 if success == False:
-                    print("Max retries reached, aborting download. You can run the program again \
-                                  to continue from here")
+                    print("Max retries reached, aborting download. You can run the program again "
+                             "to continue from here")
                     return
 
                 fout = open(filename, "wb")
-                fout.write(response.read())
+                fout.write(response.content)
                 fout.close()
             else:
                 print("File was already downloaded, continuing...")
@@ -145,8 +145,9 @@ def download_tiles(out_folder, output_format, img_id, tiles_url, height_tiles, w
 def main(img_name, req_level, out_folder, output_format, dry_run, retries):
     """If req_level is None, the maximum resolution will be used"""
 
-    response = urllib.request.urlopen(f"http://www.gigapan.org/gigapans/{img_name}.kml")
-    img_id, tiles_url, (max_width_px, max_height_px), tile_size_px = parse_kml(response.read())
+    session = requests.Session()
+    response = session.get(f"http://www.gigapan.com/gigapans/{img_name}.kml", timeout=30)
+    img_id, tiles_url, (max_width_px, max_height_px), tile_size_px = parse_kml(response.text)
 
     (max_width_tiles, max_height_tiles), max_level = calculate_max_size(
             max_width_px, max_height_px, tile_size_px)
@@ -176,23 +177,23 @@ Image to download:
     """)
 
     if not dry_run:
-        download_tiles(out_folder, output_format, img_id, tiles_url, height_tiles, width_tiles, tile_size_px, retries)
+        download_tiles(out_folder, output_format, img_id, session, tiles_url, height_tiles, width_tiles, tile_size_px, retries)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
             description='Gigapan image downloader')
 
     parser.add_argument('img_name', type=str,
-            help='Name of image, should be obtained from the link: \
-                    http://gigapan.org/gigapans/[img_name]')
+            help='Name of image, should be obtained from the link: '
+                    'http://gigapan.com/gigapans/[img_name]')
 
     parser.add_argument('-l', '--req-level', type=int,
-            help='Requested resolution level. If unset, it will download at max resolution. Try \
-                    different levels with --dry-run to observe the image size.')
+            help='Requested resolution level. If unset, it will download at max resolution. Try '
+                    'different levels with --dry-run to observe the image size.')
 
     parser.add_argument('--dry-run', action="store_true",
-            help='Fetch image metadata without downloading images. Can be used \
-                        to observe the expected image size among other things.')
+            help='Fetch image metadata without downloading images. Can be used '
+                    'to observe the expected image size among other things.')
 
     parser.add_argument('--retries', type=int, default=5,
             help='Maximum amount of retries per image.')
@@ -200,7 +201,7 @@ if __name__ == "__main__":
     parser.add_argument('--out_format', type=str, default="tif",
             help='Output format. Use "tif" or "psb".')
 
-    parser.add_argument('-o', '--out-folder', type=Path, default=Path("./downloaded/"),
+    parser.add_argument('-o', '--out-folder', type=Path, default=Path("downloaded/"),
             help='Output folder. It will be created if it does not exist.')
 
     args = parser.parse_args()

@@ -10,23 +10,24 @@ import re
 @pytest.mark.parametrize("img_name", ["130095", "0d54f8d3323a60308eb2ff9831edfe4a"])
 def test_integration(mocker, img_name):
 
-    def urllopen(url):
+    def urllopen(url, timeout=None):
         response = mocker.Mock()
-        if url == f"http://www.gigapan.org/gigapans/{img_name}.kml":
-            response.read.return_value = Path(".", "test_data", f"{img_name}.kml").read_text()
+        if url == f"http://www.gigapan.com/gigapans/{img_name}.kml":
+            response.text = Path("test_data", f"{img_name}.kml").read_text()
 
         else:
             assert re.fullmatch(r"http://gigapan.com/get_ge_tile/\d+/\d+/\d+/\d+.*", url)
-            response.read.return_value = Path(".", "test_data", "sample_tile.jpg").read_bytes()
-            response.status = 200
+            response.content = Path("test_data", "sample_tile.jpg").read_bytes()
+            response.status_code = 200
             if random.randrange(0, 5) == 0:
-                response.status = 404
+                response.status_code = 404
 
         return response
 
-    out_folder = "./test_results/"
+    out_folder = "test_results/"
 
-    urllopen_mock = mocker.patch("urllib.request.urlopen", side_effect=urllopen)
-    gigapan_downloader.main(img_name, req_level=2, out_folder=out_folder)
+    urllopen_mock = mocker.patch("requests.sessions.Session.get", side_effect=urllopen)
+    gigapan_downloader.main(img_name, req_level=2, out_folder=Path(out_folder), output_format="tif",
+                            dry_run=False, retries=5)
 
     # assert Path(".", "downloads", );
