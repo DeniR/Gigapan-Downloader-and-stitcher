@@ -1,126 +1,141 @@
-#usage: python downloadGigaPan.py <photoid>
-# http://gigapan.org/gigapans/<photoid>>
-# if level is 0, max resolution will be used, try with different levels to see the image resolution to download
-# change imagemagick or outputformat below
-# Project info https://github.com/DeniR/Gigapan-Downloader-and-stitcher
+# usage: python gigapanDownloader.py <photoid> <level>
+# example: python gigapanDownloader.py 231697 0
+# level 0 = highest resolution
 
-from xml.dom.minidom import *
-from urllib2 import *
-from urllib import *
-import sys,os,math,subprocess
+import sys
+import os
+import math
+import subprocess
+from xml.dom.minidom import parseString
+from urllib.request import urlopen
 
-outputformat="psb" #psb or tif
-imagemagick="/usr/bin/montage" #Linux path to Imagemagick
+
+# Path to ImageMagick's montage command
 if os.name == "nt":
-  imagemagick="C:\\Program Files\\ImageMagick-6.8.5-Q16\\montage.exe" #Windows path to Imagemagick
+    imagemagick = "C:\\Program Files\\ImageMagick-7.1.1-Q16-HDRI\\magick.exe"
+else:
+    imagemagick = "/usr/bin/magick"
 
+# Helper: extract text from DOM
 def getText(nodelist):
-    rc = ""
-    for node in nodelist:
-        if node.nodeType == node.TEXT_NODE:
-            rc = rc + node.data
-    return rc
+    return ''.join([node.data for node in nodelist if node.nodeType == node.TEXT_NODE])
 
-def find_element_value(e,name):
-    nodelist = [e]
-    while len(nodelist) > 0 :
-        node = nodelist.pop()
+# Helper: find element value by name
+def find_element_value(e, name):
+    nodes = [e]
+    while nodes:
+        node = nodes.pop()
         if node.nodeType == node.ELEMENT_NODE and node.localName == name:
             return getText(node.childNodes)
         else:
-            nodelist += node.childNodes
-
+            nodes.extend(node.childNodes)
     return None
 
-
-#main
+# Main
+if len(sys.argv) != 3:
+    print("Usage: python gigapanDownloader.py <photoid> <level>")
+    sys.exit(1)
 
 photo_id = int(sys.argv[1])
-if not os.path.exists(str(photo_id)):
-    os.makedirs(str(photo_id))
+level = int(sys.argv[2])
+base_url = "http://www.gigapan.org"
 
-base = "http://www.gigapan.org"
+# Create output folder
+output_dir = str(photo_id)
+os.makedirs(output_dir, exist_ok=True)
 
-# read the kml file
-h = urlopen(base+"/gigapans/%d.kml"%(photo_id))
-photo_kml=h.read()
-
-# find the width and height, level 
+# Download and parse KML
+kml_url = f"{base_url}/gigapans/{photo_id}.kml"
+with urlopen(kml_url) as h:
+    photo_kml = h.read().decode("utf-8")
 dom = parseString(photo_kml)
 
-maxheight=int(find_element_value(dom.documentElement, "maxHeight"))
-maxwidth=int(find_element_value(dom.documentElement, "maxWidth"))
-tile_size=int(find_element_value(dom.documentElement, "tileSize"))
-maxlevel = max(math.ceil(maxwidth/tile_size), math.ceil(maxheight/tile_size))
-maxlevel = int(math.ceil(math.log(maxlevel)/math.log(2.0)))
-maxwt = int(math.ceil(maxwidth/tile_size))+1
-maxht = int(math.ceil(maxheight/tile_size))+1
+# Read image info
+maxheight = int(find_element_value(dom.documentElement, "maxHeight"))
+maxwidth = int(find_element_value(dom.documentElement, "maxWidth"))
+tile_size = int(find_element_value(dom.documentElement, "tileSize"))
 
-# find the width, height, tile number and level to use
-level = int(sys.argv[2])
-if level == 0: 
-  level = maxlevel
+# Compute max level
+max_tiles_x = math.ceil(maxwidth / tile_size)
+max_tiles_y = math.ceil(maxheight / tile_size)
+maxlevel = int(math.ceil(math.log(max(max_tiles_x, max_tiles_y), 2)))
 
-width = int(maxwidth / (2 ** (maxlevel-level)))+1
-height = int(maxheight / (2 ** (maxlevel-level)))+1
-wt = int(math.ceil(width/tile_size))+1
-ht = int(math.ceil(height/tile_size))+1
+if level == 0:
+    level = maxlevel
 
-# print the variables
-print '+----------------------------'
-print '| Max size: '+str(maxwidth)+'x'+str(maxheight)+'px'
-print '| Max number of tiles: '+str(maxwt)+'x'+str(maxht)+' tiles = '+str(wt*ht)+' tiles'
-print '| Max level: '+str(maxlevel)
-print '| Tile size: '+str(tile_size)
-print '+----------------------------'
-print '| Image to download:'
-print '| Size: '+str(width)+'x'+str(height)+'px'
-print '| Number of tiles: '+str(wt)+'x'+str(ht)+' tiles = '+str(wt*ht)+' tiles'
-print '| Level: '+str(level)
-print '+----------------------------'
-print
-print 'Starting download...'
+scale = 2 ** (maxlevel - level)
+width = int(maxwidth / scale)
+height = int(maxheight / scale)
+wt = int(math.ceil(width / tile_size))
+ht = int(math.ceil(height / tile_size))
 
+# Report
+print('+----------------------------')
+print(f'| Max size: {maxwidth}x{maxheight}px')
+print(f'| Max level: {maxlevel}')
+print(f'| Tile size: {tile_size}')
+print('+----------------------------')
+print(f'| Downloading Level {level}')
+print(f'| Target size: {width}x{height}px')
+print(f'| Grid: {wt} x {ht} tiles = {wt * ht} total')
+print('+----------------------------')
+print()
+
+# Download tiles
 errors = 0
+for j in range(ht):
+    for i in range(wt):
+        filename = f"{j:04d}-{i:04d}.jpg"
+        path = os.path.join(output_dir, filename)
+        if not os.path.exists(path):
+            url = f"{base_url}/get_ge_tile/{photo_id}/{level}/{j}/{i}"
+            print(f"Downloading ({j},{i}) → {filename}")
+            try:
+                with urlopen(url) as h:
+                    with open(path, "wb") as fout:
+                        fout.write(h.read())
+            except Exception as e:
+                print(f"❌ Failed to download tile {j},{i}: {e}")
+                errors += 1
 
-#loop around to get every tile
-for j in xrange(ht):
-    for i in xrange(wt):
-        filename = "%04d-%04d.jpg"%(j,i)
-        pathfilename = str(photo_id)+"/"+filename
-        if not os.path.exists(pathfilename) :
-            url = "%s/get_ge_tile/%d/%d/%d/%d"%(base,photo_id, level,j,i)
-            progress = (j)*wt+i+1
-            print '('+str(progress)+'/'+str(wt*ht)+') Downloading '+str(url)+' as '+str(filename)
-            h = urlopen(url)
-            if 200 == h.code :
-                fout = open(pathfilename,"wb")
-                fout.write(h.read())
-                fout.close()
-            else:
-                print '('+str(progress)+'/'+str(wt*ht)+') Downloading error '+str(url)+' http code '+str(h.code)
-                ++errors
+# Stitch tiles with ImageMagick
 if errors == 0:
-    print "Stitching... "
-    for j in xrange(ht):
-        lineNo = "%04d"%(j)
-        print 'creating line '+ str(lineNo)
-        subprocess.call('"'+imagemagick+'" -depth 8 '+
-                                        '-geometry 256x256+0+0 ' +
-                                        '-mode concatenate ' +
-                                        '-tile '+ str(wt)+'x ' +
-                                        str(photo_id)+'/'+str(lineNo)+'-*.jpg ' +
-                                        str(photo_id)+'/line-'+ str(lineNo) +'.jpg',
-                        shell=True)
-    wline = wt * 256
-    print 'creating output file '
-    subprocess.call('"'+imagemagick+'" -depth 8 '+
-                    '-geometry '+str(wline)+'x256+0+0 ' +
-                    '-mode concatenate ' +
-                    '-tile x'+ str(ht)+' ' +
-                    str(photo_id)+'/line-*.jpg ' +
-                    str(photo_id)+'.'+outputformat,
-                    shell=True)
-    print "OK"
+    print("✅ Download complete. Starting stitch...")
+    for j in range(ht):
+        lineNo = f"{j:04d}"
+        print('Creating line', lineNo)
+        tile_files = [f"{photo_id}/{lineNo}-{i:04d}.jpg" for i in range(wt)]
+        subprocess.call([
+            imagemagick, "montage",
+            "-depth", "8",
+            "-geometry", "256x256+0+0",
+            "-tile", f"{wt}x"
+        ] + tile_files + [f"{photo_id}/line-{lineNo}.jpg"])
+
+    # Combine all rows
+    line_files = [f"{photo_id}/line-{j:04d}.jpg" for j in range(ht)]
+    final_output = f"{photo_id}.jpg"
+    print(f"Combining all rows into {photo_id}.jpg...")
+    subprocess.call([
+        imagemagick, "montage",
+        "-geometry", f"{wt * 256}x256+0+0",
+        "-tile", f"x{ht}"
+    ] + line_files + [
+        f"{photo_id}-stitched.jpg"
+    ])
+
+    # Trim the black edges
+    subprocess.call([
+        imagemagick,
+        f"{photo_id}-stitched.jpg",
+        "-trim",
+        "+repage",  # resets the virtual canvas size
+        f"{photo_id}.jpg"
+    ])
+
+    # Cleanup intermediate file
+    os.remove(f"{photo_id}-stitched.jpg")
+
+    print("✅ Done.")
 else:
-    print "Downloading error try running command again"
+    print(f"⚠️ {errors} tile(s) failed to download. Retry recommended.")

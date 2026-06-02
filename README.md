@@ -1,28 +1,66 @@
-Gigapan-Downloader-and-stitcher
-===============================
+# Gigapan Downloader and Stitcher
 
-##Gigapan Panorama Downloader and offline stitcher to Photoshop PSB or TIFF. 
+## Download and assemble Gigapan panoramas into a single JPEG
 
-This cross-platform Python 2.X script downloads gigapan pictures at the resolution specified and very fast stitch (assemble) with export to one big PSB (Photoshop Large Image file) or TIFF using Imagemagick.  
-Work in Windows and in any Linux.  
-Can resume download, downloaded tiles not reloaded. Will download all missing tiles  
+This cross-platform Python 3 script downloads Gigapan images at the resolution you specify, then stitches the tiles together using ImageMagick into one large JPG image.
 
-###How to run?
-1. Install Python 2.X (3.X is not supported) from python.org (Windows) or use "yum install python2.7" or similar command in Linux.  
-2. Install Imagemagick from http://www.imagemagick.org/script/binary-releases.php#windows (Windows). I recommend install ImageMagick-*-x64-static.exe x64 version, if you have x64 OS. For Linux use "yum install imagemagick" or similar command.  
-3. Download this script using "Save As" from https://raw.github.com/DeniR/Gigapan-Downloader-and-stitcher/master/gigapanDownloader.py  
-4. Change path to montage.exe in gigapanDownloader.py (Windows, default is "C:\\Program Files\\ImageMagick-6.8.5-Q16\\montage.exe") or change default /usr/bin/montage in Linux.  
-5. Select outputformat in gigapanDownloader.py - psb for large gigapans (default) or tif.  
-6. Run **python gigapanDownloader.py \<imageid> \<level>** in cmd or console. All tiles of the specified resolution level will be downloaded to \<imageid> directory, and stitched gigapan will be exported to <imageid>-giga.psb.
+- ✅ Works on Windows and Linux  
+- 🔁 Supports resume: already-downloaded tiles will be skipped  
+- 🧱 Only missing tiles are fetched — ideal for slow connections  
+- 🖼 Outputs a single trimmed JPEG file
 
-Example, http://www.gigapan.com/gigapans/130095  
-The \<imageid> is 130095
+---
 
-python gigapanDownloader.py 130095 5  
-This will download the level 5 image tiles into directory "130095" and will make gigapan image "130095-giga.psb"
-Important: If you want to download the highest resolution level avaiable choose level 0  
+## How to Use
 
-###Note
+1. **Install Python 3.x**  
+   - [Download from python.org](https://www.python.org/downloads/) for Windows  
+   - On Linux: use your package manager (e.g., `sudo apt install python3` or `sudo yum install python3`)
 
-Gigapan site is very slow, also this script use only one thread. If you want to add multithreaded download - you are welcome.
-You can try with different resolution levels to see the size of the image that will be downloaded and choose the level you need, just remember to delete the downloaded tiles
+2. **Install ImageMagick**  
+   - [Download for Windows](https://imagemagick.org/script/download.php#windows)  
+     Recommended: `ImageMagick-*-x64-static.exe` if you have a 64-bit OS  
+   - On Linux: `sudo apt install imagemagick` or `sudo yum install imagemagick`
+
+3. **Download the script**  
+   Save this file:  
+   [`gigapanDownloader.py`](https://raw.github.com/DeniR/Gigapan-Downloader-and-stitcher/master/gigapanDownloader.py)
+
+4. **Set the path to ImageMagick**  
+   Edit the script to reflect your OS:
+
+   ```python
+   imagemagick = "C:\\Program Files\\ImageMagick-7.1.1-Q16-HDRI\\magick.exe"  # Windows
+   imagemagick = "/usr/bin/magick"  # Linux
+5. Run the script
+   ```bash
+   python gigapanDownloader.py <imageid> <level>
+
+  * `<imageid>`: the numeric ID from the Gigapan URL 
+ * `<level>`: resolution level to download (use 0 for highest resolution)
+
+## Example
+
+Gigapan URL:  
+https://www.gigapan.com/gigapans/130095  
+Here, the image ID is `130095`.
+
+```bash
+python gigapanDownloader.py 130095 5
+```
+This will:
+* Download tiles for level 5 into the folder `/130095`
+* Stitch them into a single image file: `130095.jpg`
+   
+To download the highest resolution, use:
+
+```bash
+python gigapanDownloader.py 130095 0
+```
+
+## Notes
+* Gigapan servers are often slow — be patient.
+* This script uses a single-threaded downloader.
+* Already-downloaded tiles will not be re-downloaded.
+* To try a different level, delete the old tiles first.
+* Only JPG output is supported by this version.
